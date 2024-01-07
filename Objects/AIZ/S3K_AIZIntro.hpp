@@ -6,7 +6,7 @@ using namespace RSDK;
 namespace GameLogic
 {
 
-struct SuperSparkle : RSDK::GameObject::Entity {
+struct S3K_AIZIntro : RSDK::GameObject::Entity {
 
     // Object/Static Vars
     struct Static : RSDK::GameObject::Static {
@@ -14,11 +14,8 @@ struct SuperSparkle : RSDK::GameObject::Entity {
     };
 
     // Entity Vars
-    StateMachine<SuperSparkle> state;
+    StateMachine<S3K_AIZIntro> state;
     Animator animator;
-    Player *player;
-    int32 timer;
-    bool32 canSpawnSparkle;
 
     // Standard Entity Events
     void Create(void *data);
@@ -36,9 +33,9 @@ struct SuperSparkle : RSDK::GameObject::Entity {
 #endif
 
     // States
-    void State_SuperSparkle();
-    void State_HyperSparkle();
+    void State_Init();
+    void State_Idle();
 
-    RSDK_DECLARE(SuperSparkle);
+    RSDK_DECLARE(S3K_AIZIntro);
 };
 } // namespace GameLogic

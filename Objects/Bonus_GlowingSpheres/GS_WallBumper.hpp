@@ -16,7 +16,7 @@ struct GS_WallBumper : RSDK::GameObject::Entity {
     };
 
     // Entity Vars
-    int32 unknown1;
+    int32 timer;
     Animator animator;
 
     // Standard Entity Events
@@ -33,6 +33,12 @@ struct GS_WallBumper : RSDK::GameObject::Entity {
     static void EditorLoad();
     void EditorDraw();
 #endif
+
+    // Extra Entity Functions (remove if none)
+
+    // States (remove if none)
+
+    // Draw States (remove if none)
 
     RSDK_DECLARE(GS_WallBumper);
 };

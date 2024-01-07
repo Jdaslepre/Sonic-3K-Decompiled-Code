@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------
 // RSDK Project: S3KT Example Mods
 // Object Name: SuperSparkle
-// *Decompiled by: Jd1206
+// Decompiled by: Jd1206
 // ---------------------------------------------------------------------
 
 #include "GameObjects.hpp"
@@ -13,17 +13,18 @@ namespace GameLogic
 
 RSDK_REGISTER_OBJECT(SuperSparkle);
 
-void SuperSparkle::Update() { this->state.Run(this); }
+void SuperSparkle::Update() { }
 
 void SuperSparkle::LateUpdate()
 {
-    if (this->state.Matches(nullptr)) {
-        if (this->player->superState == Player::SUPERSTATE_SUPER)
-            this->state.Set(&SuperSparkle::State_SuperSparkle);
 
-        else if (this->player->superState == Player::SUPERSTATE_HYPER)
-            this->state.Set(&SuperSparkle::State_HyperSparkle);
+    this->state.Run(this);
+
+    if (this->player->superState == Player::SUPERSTATE_SUPER && this->player->active != ACTIVE_NEVER) {
+        return;
     }
+
+    this->Reset(TYPE_BLANK, NULL);
 }
 
 void SuperSparkle::StaticUpdate() {}
@@ -31,7 +32,6 @@ void SuperSparkle::StaticUpdate() {}
 void SuperSparkle::Draw()
 {
     Player *player = this->player;
-    Animator sparkleAnimator;
 
     uint8 timerDelay;
     uint8 timerDelay2;
@@ -43,8 +43,6 @@ void SuperSparkle::Draw()
     Vector2 drawPos;
 
     if (this->state.Matches(&SuperSparkle::State_HyperSparkle)) {
-
-        sparkleAnimator.SetAnimation(sVars->aniFrames, 1, true, 1);
 
         angle = this->angle;
 
@@ -61,13 +59,13 @@ void SuperSparkle::Draw()
         calculatedAngle = Math::Sin1024(angle);
         drawPos.y += timer * 0x180 * calculatedAngle;
 
-        sparkleAnimator.frameID = timer;
+        this->animator.frameID = timer;
 
         if (timer < 0)
-            sparkleAnimator.frameID = timer + 1;
+            this->animator.frameID = timer + 1;
 
-        sparkleAnimator.frameID >>= 1;
-        sparkleAnimator.DrawSprite(&drawPos, false);
+        this->animator.frameID >>= 1;
+        this->animator.DrawSprite(&drawPos, false);
 
         // Sparkle 2
 
@@ -88,13 +86,13 @@ void SuperSparkle::Draw()
         calculatedAngle = Math::Sin1024(angle + 0x100);
         drawPos.y += timer * 0x180 * calculatedAngle;
 
-        sparkleAnimator.frameID = timer;
+        this->animator.frameID = timer;
 
         if (timer < 0)
-            sparkleAnimator.frameID = timer + 1;
+            this->animator.frameID = timer + 1;
 
-        sparkleAnimator.frameID >>= 1;
-        sparkleAnimator.DrawSprite(&drawPos, false);
+        this->animator.frameID >>= 1;
+        this->animator.DrawSprite(&drawPos, false);
 
         // Sparkle 3
 
@@ -115,13 +113,13 @@ void SuperSparkle::Draw()
         calculatedAngle = Math::Sin1024(angle + 0x200);
         drawPos.y += timer * 0x180 * calculatedAngle;
 
-        sparkleAnimator.frameID = timer;
+        this->animator.frameID = timer;
 
         if (timer < 0)
-            sparkleAnimator.frameID = timer + 1;
+            this->animator.frameID = timer + 1;
 
-        sparkleAnimator.frameID >>= 1;
-        sparkleAnimator.DrawSprite(&drawPos, false);
+        this->animator.frameID >>= 1;
+        this->animator.DrawSprite(&drawPos, false);
 
         // Sparkle 4
 
@@ -145,8 +143,8 @@ void SuperSparkle::Draw()
         if (timer < 0)
             timer += 1;
 
-        sparkleAnimator.frameID = timer >> 1;
-        sparkleAnimator.DrawSprite(&drawPos, false);
+        this->animator.frameID = timer >> 1;
+        this->animator.DrawSprite(&drawPos, false);
     }
 }
 
@@ -155,6 +153,17 @@ void SuperSparkle::Create(void *data)
     if (!sceneInfo->inEditor) {
         this->active = ACTIVE_NORMAL;
         this->player = (Player *)data;
+
+        if (this->player->classID == Player::sVars->classID) {
+            if (!this->player->jumpAbilityState_hyper) {
+                this->state.Set(&SuperSparkle::State_SuperSparkle);
+            }
+            else {
+                this->visible = true;
+                this->animator.SetAnimation(sVars->aniFrames, 1, true, 0);
+                this->state.Set(&SuperSparkle::State_HyperSparkle);
+            }
+        }
     }
 }
 
@@ -166,15 +175,9 @@ void SuperSparkle::EditorDraw() {}
 void SuperSparkle::EditorLoad() {}
 #endif
 
-void SuperSparkle::StaticLoad(Static *sVars)
-{
-    RSDK_INIT_STATIC_VARS(SuperSparkle);
-}
+void SuperSparkle::StaticLoad(Static *sVars) { RSDK_INIT_STATIC_VARS(SuperSparkle); }
 
 void SuperSparkle::Serialize() {}
-
-// Basically just the mania one with 3K changes
-// They're basically identical though
 
 void SuperSparkle::State_SuperSparkle()
 {
@@ -197,14 +200,15 @@ void SuperSparkle::State_SuperSparkle()
                 sparkle->state.Set(&Debris::State_Move);
                 sparkle->timer = 16;
 
-                /* Enabled by some global variable for some reason? the alpha is always 0x100 for some reason tho
-                sparkle->inkEffect    = INK_ADD;
-                */
+                if (globals->bossAttackRestartMilliseconds)
+                    sparkle->inkEffect = INK_ADD;
 
                 sparkle->alpha     = 0x100;
                 sparkle->drawGroup = Zone::sVars->objectDrawGroup[1];
                 sparkle->drawGroup = player->drawGroup;
                 sparkle->animator.SetAnimation(sVars->aniFrames, 0, true, 0);
+
+                // some extra code for S3K_DDZSetup
             }
         }
         else {
@@ -237,9 +241,6 @@ void SuperSparkle::State_HyperSparkle()
             angle = -16;
 
         this->angle += angle;
-
-        if (player->superState != Player::SUPERSTATE_HYPER || player->active == ACTIVE_NEVER) // custom as well
-            this->Destroy();
     }
 }
 

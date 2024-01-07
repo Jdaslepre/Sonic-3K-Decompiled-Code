@@ -31,18 +31,15 @@ void GS_WallBumper::Update()
 
             player->animationReserve = Player::ANI_SPRING_CS;
             sVars->sfxBumper.Play(false, 255);
-            this->active   = ACTIVE_NORMAL;
-            this->unknown1 = 10;
+            this->active = ACTIVE_NORMAL;
+            this->timer  = 10;
         }
 
-        if (this->unknown1 > 0) {
+        if (this->timer > 0) {
             this->animator.Process();
+            --this->timer;
 
-            int32 var1     = this->unknown1;
-            int32 var2     = var1 - 1;
-            this->unknown1 = var1;
-
-            if (!var2 || var1 < 1) {
+            if (this->timer <= 1) {
                 this->animator.SetAnimation(sVars->aniFrames, 0, true, 0);
                 this->active = ACTIVE_BOUNDS;
             }
