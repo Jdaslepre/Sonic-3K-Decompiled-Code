@@ -17,14 +17,10 @@ void SuperSparkle::Update() { }
 
 void SuperSparkle::LateUpdate()
 {
-
     this->state.Run(this);
 
-    if (this->player->superState == Player::SUPERSTATE_SUPER && this->player->active != ACTIVE_NEVER) {
-        return;
-    }
-
-    this->Reset(TYPE_BLANK, NULL);
+    if (this->player->superState != Player::SUPERSTATE_SUPER && this->player->active == ACTIVE_NEVER)
+        this->Reset(TYPE_BLANK, NULL);
 }
 
 void SuperSparkle::StaticUpdate() {}
@@ -33,18 +29,13 @@ void SuperSparkle::Draw()
 {
     Player *player = this->player;
 
+    int32 timer;
     uint8 timerDelay;
     uint8 timerDelay2;
-
-    int32 angle;
-    int32 timer;
-    int32 calculatedAngle;
 
     Vector2 drawPos;
 
     if (this->state.Matches(&SuperSparkle::State_HyperSparkle)) {
-
-        angle = this->angle;
 
         // Sparkle 1
 
@@ -53,11 +44,8 @@ void SuperSparkle::Draw()
         drawPos.x = player->position.x;
         drawPos.y = player->position.y;
 
-        calculatedAngle = Math::Cos1024(angle);
-        drawPos.x += timer * 0x180 * calculatedAngle;
-
-        calculatedAngle = Math::Sin1024(angle);
-        drawPos.y += timer * 0x180 * calculatedAngle;
+        drawPos.x += timer * 0x180 * Math::Cos1024(this->angle);
+        drawPos.y += timer * 0x180 * Math::Sin1024(this->angle);
 
         this->animator.frameID = timer;
 
@@ -80,11 +68,8 @@ void SuperSparkle::Draw()
         drawPos.x = player->position.x;
         drawPos.y = player->position.y;
 
-        calculatedAngle = Math::Cos1024(angle + 0x100);
-        drawPos.x += timer * 0x180 * calculatedAngle;
-
-        calculatedAngle = Math::Sin1024(angle + 0x100);
-        drawPos.y += timer * 0x180 * calculatedAngle;
+        drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x100);
+        drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x100);
 
         this->animator.frameID = timer;
 
@@ -107,11 +92,8 @@ void SuperSparkle::Draw()
         drawPos.x = player->position.x;
         drawPos.y = player->position.y;
 
-        calculatedAngle = Math::Cos1024(angle + 0x200);
-        drawPos.x += timer * 0x180 * calculatedAngle;
-
-        calculatedAngle = Math::Sin1024(angle + 0x200);
-        drawPos.y += timer * 0x180 * calculatedAngle;
+        drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x200);
+        drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x200);
 
         this->animator.frameID = timer;
 
@@ -134,11 +116,8 @@ void SuperSparkle::Draw()
         drawPos.x = player->position.x;
         drawPos.y = player->position.y;
 
-        calculatedAngle = Math::Cos1024(angle + 0x300);
-        drawPos.x += timer * 0x180 * calculatedAngle;
-
-        calculatedAngle = Math::Sin1024(angle + 0x300);
-        drawPos.y += timer * 0x180 * calculatedAngle;
+        drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x300);
+        drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x300);
 
         if (timer < 0)
             timer += 1;
@@ -155,7 +134,7 @@ void SuperSparkle::Create(void *data)
         this->player = (Player *)data;
 
         if (this->player->classID == Player::sVars->classID) {
-            if (!this->player->jumpAbilityState_hyper) {
+            if (!this->player->jumpAbilityStateHyper) {
                 this->state.Set(&SuperSparkle::State_SuperSparkle);
             }
             else {
@@ -179,7 +158,7 @@ void SuperSparkle::StaticLoad(Static *sVars) { RSDK_INIT_STATIC_VARS(SuperSparkl
 
 void SuperSparkle::Serialize() {}
 
-void SuperSparkle::State_SuperSparkle()
+void SuperSparkle::State_SuperSparkle() // basically the mania one with S3K changes
 {
     SET_CURRENT_STATE();
 
@@ -224,24 +203,13 @@ void SuperSparkle::State_HyperSparkle()
 {
     SET_CURRENT_STATE();
 
-    Player *player = this->player;
-    int32 angle;
+    this->drawGroup = this->player->drawGroup;
+    ++this->timer;
 
-    if (!player) { // if/else check taken from SuperSparkle_State_SuperSparkle, custom
-        this->Destroy();
-    }
-    else {
-        this->visible   = true; // was originally in the create func, didn't work for some reason
-        this->drawGroup = player->drawGroup;
-        this->timer += 1;
-
-        if ((player->direction | FLIP_Y) == FLIP_Y)
-            angle = 16;
-        else
-            angle = -16;
-
-        this->angle += angle;
-    }
+    if ((player->direction | FLIP_Y) == FLIP_Y)
+        this->angle += 16;
+    else
+        this->angle -= 16;
 }
 
 } // namespace GameLogic
