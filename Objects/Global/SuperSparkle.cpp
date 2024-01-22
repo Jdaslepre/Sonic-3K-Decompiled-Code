@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------
-// RSDK Project: S3KT Example Mods
+// RSDK Project: Sonic 3K
 // Object Name: SuperSparkle
 // Decompiled by: Jd1206
 // ---------------------------------------------------------------------
@@ -20,107 +20,76 @@ void SuperSparkle::LateUpdate()
     this->state.Run(this);
 
     if (this->player->superState != Player::SUPERSTATE_SUPER && this->player->active == ACTIVE_NEVER)
-        this->Reset(TYPE_BLANK, NULL);
+        this->Destroy();
 }
 
 void SuperSparkle::StaticUpdate() {}
 
 void SuperSparkle::Draw()
 {
-    Player *player = this->player;
-
-    int32 timer;
-    uint8 timerDelay;
-    uint8 timerDelay2;
-
-    Vector2 drawPos;
-
     if (this->state.Matches(&SuperSparkle::State_HyperSparkle)) {
 
         // Sparkle 1
 
-        timer = this->timer % 8;
-
-        drawPos.x = player->position.x;
-        drawPos.y = player->position.y;
+        int32 timer     = this->timer % 8;
+        Vector2 drawPos = this->player->position;
 
         drawPos.x += timer * 0x180 * Math::Cos1024(this->angle);
         drawPos.y += timer * 0x180 * Math::Sin1024(this->angle);
 
-        this->animator.frameID = timer;
-
-        if (timer < 0)
-            this->animator.frameID = timer + 1;
-
-        this->animator.frameID >>= 1;
+        this->animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
         this->animator.DrawSprite(&drawPos, false);
 
         // Sparkle 2
 
-        timerDelay  = timer + 2;
-        timerDelay2 = timer + 9;
+        uint8 tOffset  = timer + 2;
+        uint8 tOffset2 = timer + 9;
 
-        if (timerDelay > -1)
-            timerDelay2 = timerDelay;
+        if (tOffset > -1)
+            tOffset2 = tOffset;
 
-        timer = timerDelay - (timerDelay2 & 0xfffffff8);
-
-        drawPos.x = player->position.x;
-        drawPos.y = player->position.y;
+        timer   = tOffset - (tOffset2 & -8);
+        drawPos = this->player->position;
 
         drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x100);
         drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x100);
 
-        this->animator.frameID = timer;
-
-        if (timer < 0)
-            this->animator.frameID = timer + 1;
-
-        this->animator.frameID >>= 1;
+        this->animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
         this->animator.DrawSprite(&drawPos, false);
 
         // Sparkle 3
 
-        timerDelay  = timer + 2;
-        timerDelay2 = timer + 9;
+        tOffset  = timer + 2;
+        tOffset2 = timer + 9;
 
-        if (timerDelay > -1)
-            timerDelay2 = timerDelay;
+        if (tOffset > -1)
+            tOffset2 = tOffset;
 
-        timer = timerDelay - (timerDelay2 & 0xfffffff8);
-
-        drawPos.x = player->position.x;
-        drawPos.y = player->position.y;
+        timer   = tOffset - (tOffset2 & -8);
+        drawPos = this->player->position;
 
         drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x200);
         drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x200);
 
-        this->animator.frameID = timer;
-
-        if (timer < 0)
-            this->animator.frameID = timer + 1;
-
-        this->animator.frameID >>= 1;
+        this->animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
         this->animator.DrawSprite(&drawPos, false);
 
         // Sparkle 4
 
-        timerDelay  = timer + 2;
-        timerDelay2 = timer + 9;
+        tOffset  = timer + 2;
+        tOffset2 = timer + 9;
 
-        if (timerDelay > -1)
-            timerDelay2 = timerDelay;
+        if (tOffset > -1)
+            tOffset2 = tOffset;
 
-        timer = timerDelay - (timerDelay2 & 0xfffffff8);
-
-        drawPos.x = player->position.x;
-        drawPos.y = player->position.y;
+        timer   = tOffset - (tOffset2 & -8);
+        drawPos = this->player->position;
 
         drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x300);
         drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x300);
 
         if (timer < 0)
-            timer += 1;
+            ++timer;
 
         this->animator.frameID = timer >> 1;
         this->animator.DrawSprite(&drawPos, false);
@@ -158,44 +127,41 @@ void SuperSparkle::StaticLoad(Static *sVars) { RSDK_INIT_STATIC_VARS(SuperSparkl
 
 void SuperSparkle::Serialize() {}
 
-void SuperSparkle::State_SuperSparkle() // basically the mania one with S3K changes
+void SuperSparkle::State_SuperSparkle()
 {
     SET_CURRENT_STATE();
 
-    Player *player = this->player;
+    if (this->player->onGround)
+        this->canSpawnSparkle = abs(player->velocity.y) + abs(this->player->velocity.x) > TO_FIXED(6);
 
-    if (!player) {
-        this->Destroy();
-    }
-    else {
-        if (player->groundedStore)
-            this->canSpawnSparkle = abs(player->velocity.y) + abs(player->velocity.x) > TO_FIXED(6);
+    if (this->canSpawnSparkle) {
+        if (++this->timer == 14) {
+            this->timer = 0;
 
-        if (this->canSpawnSparkle) {
-            if (++this->timer == 14) {
-                this->timer = 0;
+            Debris *sparkle = CREATE_ENTITY(Debris, NULL, this->player->position.x, this->player->position.y);
+            sparkle->state.Set(&Debris::State_Move);
+            sparkle->timer = 16;
 
-                Debris *sparkle = CREATE_ENTITY(Debris, NULL, player->position.x, player->position.y);
-                sparkle->state.Set(&Debris::State_Move);
-                sparkle->timer = 16;
+            if (globals->bossAttackRestartMilliseconds)
+                sparkle->inkEffect = INK_ADD;
 
-                if (globals->bossAttackRestartMilliseconds)
-                    sparkle->inkEffect = INK_ADD;
+            sparkle->alpha     = 0x100;
+            sparkle->drawGroup = Zone::sVars->objectDrawGroup[1]; // ???
+            sparkle->drawGroup = this->player->drawGroup;
+            sparkle->animator.SetAnimation(sVars->aniFrames, 0, true, 0);
 
-                sparkle->alpha     = 0x100;
-                sparkle->drawGroup = Zone::sVars->objectDrawGroup[1];
-                sparkle->drawGroup = player->drawGroup;
-                sparkle->animator.SetAnimation(sVars->aniFrames, 0, true, 0);
-
-                // some extra code for S3K_DDZSetup
+            if (S3K_DDZSetup::sVars) {
+                if (!(S3K_DDZSetup::sVars + 0xc)) { // currently unknown
+                    sparkle->velocity.x = -TO_FIXED(6);
+                }
+                else {
+                    sparkle->velocity.x += this->player->velocity.x;
+                }
             }
         }
-        else {
-            this->timer = 0;
-        }
-
-        if (player->superState != Player::SUPERSTATE_SUPER || player->active == ACTIVE_NEVER)
-            this->Destroy();
+    }
+    else {
+        this->timer = 0;
     }
 }
 
@@ -206,7 +172,7 @@ void SuperSparkle::State_HyperSparkle()
     this->drawGroup = this->player->drawGroup;
     ++this->timer;
 
-    if ((player->direction | FLIP_Y) == FLIP_Y)
+    if ((this->player->direction | FLIP_Y) == FLIP_Y)
         this->angle += 16;
     else
         this->angle -= 16;
