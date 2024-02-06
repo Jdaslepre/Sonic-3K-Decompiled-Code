@@ -11,6 +11,8 @@ This code is not meant to be built as its own dll/library, you're meant to inclu
 
 Don't be surprised if some stuff is incomplete, missing, or broken
 
+Also - be aware that there just might be random modifications to the code (most of it came from my S3 project), i've been updating the repo to remove leftovers from it
+
 have fun i guess, don't start a full sonic 3 decomp without me thanks
 
 # ... also!

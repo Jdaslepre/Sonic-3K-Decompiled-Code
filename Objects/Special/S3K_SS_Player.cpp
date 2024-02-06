@@ -161,9 +161,6 @@ void S3K_SS_Player::Input_Gamepad()
 {
     SET_CURRENT_STATE();
 
-    if (globals->useMobileBehavior)
-        TouchHelpers::RunTouchInfoLogic(this->controllerID, (screenInfo->center.x - 0x54), NULL, (screenInfo->center.x + 0x54), 40, NULL, NULL);
-
     if (this->controllerID < PLAYER_COUNT) {
         ControllerState *controller = &controllerInfo[this->controllerID];
         AnalogState *stick          = &analogStickInfoL[this->controllerID];

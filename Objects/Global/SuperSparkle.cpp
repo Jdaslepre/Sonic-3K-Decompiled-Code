@@ -4,6 +4,8 @@
 // Decompiled by: Jd1206
 // ---------------------------------------------------------------------
 
+// This is supposed to have 2X more stars, but S3O only has half
+
 #include "GameObjects.hpp"
 
 using namespace RSDK;
@@ -27,18 +29,22 @@ void SuperSparkle::StaticUpdate() {}
 
 void SuperSparkle::Draw()
 {
+    Animator animator;
+
     if (this->state.Matches(&SuperSparkle::State_HyperSparkle)) {
+
+        animator.SetAnimation(sVars->aniFrames, 1, true, 1);
 
         // Sparkle 1
 
-        int32 timer     = this->timer % 8;
         Vector2 drawPos = this->player->position;
+        int32 timer     = this->timer % 8;
 
         drawPos.x += timer * 0x180 * Math::Cos1024(this->angle);
         drawPos.y += timer * 0x180 * Math::Sin1024(this->angle);
 
-        this->animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
-        this->animator.DrawSprite(&drawPos, false);
+        animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
+        animator.DrawSprite(&drawPos, false);
 
         // Sparkle 2
 
@@ -54,8 +60,8 @@ void SuperSparkle::Draw()
         drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x100);
         drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x100);
 
-        this->animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
-        this->animator.DrawSprite(&drawPos, false);
+        animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
+        animator.DrawSprite(&drawPos, false);
 
         // Sparkle 3
 
@@ -71,8 +77,8 @@ void SuperSparkle::Draw()
         drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x200);
         drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x200);
 
-        this->animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
-        this->animator.DrawSprite(&drawPos, false);
+        animator.frameID = ((timer < 0) ? timer + 1 : timer) >> 1;
+        animator.DrawSprite(&drawPos, false);
 
         // Sparkle 4
 
@@ -88,11 +94,12 @@ void SuperSparkle::Draw()
         drawPos.x += timer * 0x180 * Math::Cos1024(this->angle + 0x300);
         drawPos.y += timer * 0x180 * Math::Sin1024(this->angle + 0x300);
 
+        // this one increments the timer instead of directly incrementing the frameID
         if (timer < 0)
             ++timer;
 
-        this->animator.frameID = timer >> 1;
-        this->animator.DrawSprite(&drawPos, false);
+        animator.frameID = timer >> 1;
+        animator.DrawSprite(&drawPos, false);
     }
 }
 
