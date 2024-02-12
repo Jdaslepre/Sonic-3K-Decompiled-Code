@@ -5,7 +5,7 @@ Exactly what it says it is - this is a collection of reverse-engineered S3O code
 
 This repo is *not* a full/complete decomp of Sonic 3K, but rather just a few objects, incase you were wondering what they'd look like, or if you wanted to port the 3K titlecard to mania for some reason, i dunno
 
-Currently (and most likely forvever) - you can't use this code as a way to play Sonic 3K on the RSDKv5U decomp, since yknow, it's missing... literally everything
+Currently (and most likely forever) - you can't use this code as a way to play Sonic 3K on the RSDKv5U decomp, since yknow, it's missing... literally everything
 
 This code is not meant to be built as its own dll/library, you're meant to include it in an existing project
 
