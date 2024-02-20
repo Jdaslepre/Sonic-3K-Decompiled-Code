@@ -35,8 +35,8 @@ void TitleCard::Draw()
     // originally (this->actID - 2) > 2, didn't wanna work for
     // some reason so here's some custom stuff
     if (this->actID < 3) {
-        drawPos.x = this->field_0xcc;
-        drawPos.y = this->field_0xd0;
+        drawPos.x = this->actIDPos.x;
+        drawPos.y = this->actIDPos.y;
         this->actIDAnimator.DrawSprite(&drawPos, true);
     }
 
@@ -64,85 +64,80 @@ void TitleCard::Draw()
 
 void TitleCard::Create(void *data)
 {
-    int32 unknown1;
-    uint8 unknown2;
-    // unknown3 is hiding from us
-    int32 unknown4;
-    int32 unknown5;
+    int32 unknown2;
     int32 unknown6;
 
-    // globals[1].replayWriteBuffer[0xCF09] != 2
-    if (globals->suppressTitlecard != 2) {
+    if (globals->storedOverrideUnknown == 2) {
+        this->Destroy();
+    }
+    else {
         this->active    = ACTIVE_ALWAYS;
         this->visible   = true;
         this->drawGroup = Zone::sVars->hudDrawGroup + 1;
 
         if (sceneInfo->inEditor) {
             this->gameNameAnimator.SetAnimation(sVars->aniFrames, 0, false, 3);
-            return;
         }
+        else {
 
-        if (!this->strName.chars)
-            this->strName.Init("UNTITLED", 256);
+            if (!this->strName.chars)
+                this->strName.Init("UNTITLED", 256);
 
-        this->strName.SetSpriteString(sVars->aniFrames, 1);
-        int32 stringWidth = this->strName.GetWidth(sVars->aniFrames, 1, 0, this->field_0x80, 0);
+            this->strName.SetSpriteString(sVars->aniFrames, 1);
+            int32 stringWidth = this->strName.GetWidth(sVars->aniFrames, 1, 0, this->field_0x80, 0);
 
-        this->storedStrWidth = stringWidth;
-        unknown5             = screenInfo->size.x;
-        unknown1             = (screenInfo->size).y;
-        this->field_0x9c     = 1;
-        unknown4             = (int)((float)(unknown1 + -0xe0) * 0.5 * 65536.0);
-        unknown1             = unknown4 + 0xb00000;
-        unknown5             = (int)((float)(unknown5 + -0x140) * 0.5 * 65536.0);
+            this->storedStrWidth = stringWidth;
 
-        this->bannerPos.x = unknown5 + TO_FIXED(96);
-        this->bannerPos.y = unknown1 + (int)((float)unknown1 / 11.0) * -11;
+            this->field_0x9c = 1;
 
-        this->field_0x98       = unknown1;
-        this->field_0xa0       = (int)((float)unknown1 / 11.0);
-        unknown1               = unknown5 + 0x1200000;
-        unknown6               = (int)(((float)screenInfo->size.x / 320.0) * 1048576.0);
-        this->primaryWordPos.y = unknown4 + 0x780000;
-        this->field_0xac       = unknown1;
-        this->field_0xb0       = 3;
-        this->field_0xb4       = unknown6;
-        this->primaryWordPos.x = unknown1 + unknown6 * 0x14;
+            // Calculate the difference between RSDK and the SEGA Genesis' resolution
+            // these specifically use screenInfo->size... instead of preset ones (424, 240)
+            int32 screenXCenter = TO_FIXED_F((screenInfo->size.x - 320) / 2);
+            int32 screenYCenter = TO_FIXED_F((screenInfo->size.y - 224) / 2);
 
-        if (this->noBanner) {
-            unknown2 = screenInfo->size.x;
+            // max banner y
+            int32 mby = screenYCenter + TO_FIXED(176);
 
-            if ((int32)unknown2 < 0)
-                unknown2 += 1;
+            this->bannerPos.x = screenXCenter + TO_FIXED(96);
+            this->bannerPos.y = mby % 11;
 
-            if (stringWidth < 0)
-                stringWidth += 1;
-            
-            *(uint8 *)&this->field_0xac = ((unknown2 >> 1) + (stringWidth >> 1)) * 0x10000;
+            this->field_0x98 = mby; // rename field_0x98 to maxBannerY or something
+
+            this->field_0xa0 = mby / 11.0; // controls the banner y speed based on the screen's Y size
+
+            int32 unknown1         = screenXCenter + TO_FIXED(288);
+            unknown6         = (int)(((float)screenInfo->size.x / 320.0) * 1048576.0);
+            // unknown6 = TO_FIXED_F((screenInfo->size.x / 320) * 16);
+
+            this->primaryWordPos.x = unknown1 + unknown6 * 20;
+            this->primaryWordPos.y = screenYCenter + TO_FIXED(120);
+            this->field_0xac       = screenXCenter + TO_FIXED(288); // max x position of the first word (Zone name)
+            this->field_0xb0       = 3;
+            this->field_0xb4       = unknown6;
+
+            // sorry for this horrible looking code, it's not *that* bad i think...
+            if (this->noBanner)
+                this->field_0xac = TO_FIXED((screenInfo->size.x + (screenInfo->size.x < 0) + stringWidth + (stringWidth < 0)) >> 1);
+
+            this->secondaryWordPos.x = unknown1 + unknown6 * 24;
+            this->secondaryWordPos.y = screenYCenter + TO_FIXED(0x98);
+
+            this->field_0xc4 = 5;
+            this->actIDPos.y = screenYCenter + TO_FIXED(0xA0);
+            this->field_0xd4 = screenXCenter + TO_FIXED(0xE8);
+            this->field_0xd8 = 7;
+            this->field_0xc0 = unknown1;
+            this->field_0xe0 = 90;
+            this->field_0xc8 = unknown6;
+            this->actIDPos.x = screenXCenter + TO_FIXED(0xE8) + unknown6 * 28;
+            this->field_0xdc = unknown6;
+
+            if (globals->skipSaveSelect == 4 || globals->skipSaveSelect == 2)
+                sceneInfo->timeEnabled = true;
+            else
+                this->state.Set(&TitleCard::State_Init);
         }
-
-        this->secondaryWordPos.x = unknown1 + unknown6 * 24;
-        this->secondaryWordPos.y = unknown4 + 0x980000;
-
-        this->field_0xc4 = 5;
-        this->field_0xd0 = unknown4 + 0xa00000;
-        this->field_0xd4 = unknown5 + 0xe80000;
-        this->field_0xd8 = 7;
-        this->field_0xc0 = unknown1;
-        this->field_0xe0 = 90;
-        this->field_0xc8 = unknown6;
-        this->field_0xcc = unknown5 + 0xe80000 + unknown6 * 28;
-        this->field_0xdc = unknown6;
-
-        if (globals[1].replayWriteBuffer[0xcf49] != 4 && globals[1].replayWriteBuffer[0x49] != 2) {
-            this->state.Set(&TitleCard::State_Init);
-            return;
-        }
-
-        sceneInfo->timeEnabled = true;
     }
-
-    this->Reset(0, NULL);
 }
 
 void TitleCard::StageLoad()
@@ -157,19 +152,16 @@ void TitleCard::StageLoad()
     pSVar1->size                = strName.size;
     sVars->secondaryWord.chars  = strName.chars;
 
-    RSDKTable->InitString(&strName, "ZOO", 0);
+    strName.Init("ZOO", 0);
+    // RSDKTable->InitString(&strName, "ZOO", 0);
 
     pSVar1                  = &sVars->secondaryWord;
     String *pSVar2          = &sVars->strName;
     (sVars->strName).length = strName.length;
     pSVar2->size            = strName.size;
     (sVars->strName).chars  = strName.chars;
-
-    RSDKTable->SetSpriteString(sVars->aniFrames.aniFrames, 1, pSVar1);
-    RSDKTable->SetSpriteString(sVars->aniFrames.aniFrames, 1, &sVars->strName);
-
-    // taken from mania
-    foreach_all(TitleCard, titleCard) { Zone::sVars->actID = titleCard->actID; }
+    pSVar1->SetSpriteString(sVars->aniFrames, 1);
+    sVars->strName.SetSpriteString(sVars->aniFrames, 1);
 }
 
 #if RETRO_INCLUDE_EDITOR
@@ -200,11 +192,11 @@ void TitleCard::State_Init()
     this->gameNameAnimator.SetAnimation(sVars->aniFrames, 0, false, 0);
 
     uVar3 = 1;
-    if (globals[1].replayWriteBuffer[0xcf06] != 6)
+    if (globals->starpostStyle != 6)
         uVar3 = 2;
 
     uVar1 = 0;
-    if (globals[1].replayWriteBuffer[0xcf06] != 5)
+    if (globals->starpostStyle != 5)
         uVar1 = uVar3;
 
     this->field_0xf8 = uVar1;
@@ -213,9 +205,7 @@ void TitleCard::State_Init()
     frameID = this->actID;
     uVar2   = this->actID;
 
-    globals[1].replayWriteBuffer[0xcf0a] = 0; // remove this line when the globals are corrected
-
-    if ((globals[1].replayWriteBuffer[0xcf0a] == 0) || (uVar2 != 1)) {
+    if (!globals->atlCameraBoundsL[0] || uVar2 != 1) {
         aniFrames = sVars->aniFrames;
 
         if (uVar2 > 4)
@@ -233,24 +223,20 @@ void TitleCard::State_Init()
 
     this->state.Set(&TitleCard::State_MoveIn);
 
-    // this used to be globals[1].replayWriteBuffer[0xcf09] != 0
-    // but, i'm taking a guess that this is supposed to be
-    // globals->supressTitleCard (my globals are messed up in ghidra :<)
-
-    if (globals->suppressTitlecard) {
+    if (globals->storedOverrideUnknown) {
         this->storedFade = NULL;
-        return;
     }
+    else {
+        FXFade *fade = CREATE_ENTITY(FXFade, NULL, this->position.x, this->position.y);
+        fade->state.Set(StateMachine_None);
+        fade->timer      = 512;
+        fade->speedIn    = 32;
+        fade->drawGroup  = Zone::sVars->hudDrawGroup;
+        fade->active     = true;
+        this->storedFade = fade;
 
-    FXFade *fade = CREATE_ENTITY(FXFade, NULL, this->position.x, this->position.y);
-    fade->state.Set(StateMachine_None);
-    fade->timer      = 512;
-    fade->speedIn    = 32;
-    fade->drawGroup  = Zone::sVars->hudDrawGroup;
-    fade->active     = true;
-    this->storedFade = fade;
-
-    Stage::SetEngineState(ENGINESTATE_PAUSED);
+        Stage::SetEngineState(ENGINESTATE_PAUSED);
+    }
 }
 
 void TitleCard::State_MoveIn()
@@ -281,18 +267,16 @@ void TitleCard::State_MoveIn()
     }
     else {
     LAB_71001a56ac:
-        bVar3 = bVar3 >> 1 & 1;
+        bVar3 >>= 1 & 1;
     }
     if (bVar3 == 0) {
-        iVar2 = this->field_0xac;
-        if (iVar2 < this->primaryWordPos.x) {
-            iVar1 = this->primaryWordPos.x - this->field_0xb4;
-            if (iVar2 < iVar1) {
-                this->primaryWordPos.x = iVar1;
+        if (this->field_0xac < this->primaryWordPos.x) {
+            if (this->field_0xac < (this->primaryWordPos.x - this->field_0xb4)) {
+                this->primaryWordPos.x -= this->field_0xb4;
             }
             else {
                 uVar4                  = uVar4 | 2;
-                this->primaryWordPos.x = iVar2;
+                this->primaryWordPos.x = this->field_0xac;
                 this->field_0xe2       = (char)uVar4;
             }
         }
@@ -316,14 +300,14 @@ void TitleCard::State_MoveIn()
 joined_r0x0071001a5758:
     if (uVar4 == 0) {
         iVar2 = this->field_0xd4;
-        if (iVar2 < this->field_0xcc) {
-            iVar1 = this->field_0xcc - this->field_0xdc;
+        if (iVar2 < this->actIDPos.x) {
+            iVar1 = this->actIDPos.x - this->field_0xdc;
             if (iVar1 <= iVar2) {
-                this->field_0xcc = iVar2;
+                this->actIDPos.x = iVar2;
                 this->field_0xe2 = bVar3 | 8;
                 return;
             }
-            this->field_0xcc = iVar1;
+            this->actIDPos.x = iVar1;
         }
     }
 }
@@ -349,16 +333,10 @@ void TitleCard::State_WaitFade()
 {
     SET_CURRENT_STATE();
 
-    if (this->storedFade && this->storedFade->classID) {
+    if (this->storedFade && this->storedFade->classID)
         return;
-    }
 
-    // temp disabled because oml
     this->state.Set(&TitleCard::State_MoveOut);
-
-    // this->state.Set(StateMachine_None);
-    // sceneInfo->timeEnabled = true;
-    // this->Reset(0, NULL);
 }
 
 void TitleCard::State_MoveOut()
@@ -382,11 +360,11 @@ void TitleCard::State_MoveOut()
     Camera *camera;
 
     bVar3 = this->field_0xe2;
-    uVar7 = (uint8)bVar3;
+    uVar7 = bVar3;
 
     if (!bVar3) {
         sceneInfo->timeEnabled = true;
-        this->Reset(0, NULL);
+        this->Destroy();
 
         if (globals->atlEnabled) {
 
@@ -449,25 +427,25 @@ void TitleCard::State_MoveOut()
         if ((((bVar3 & 1) != 0) && (this->field_0x9c <= bVar1))
             && (iVar9 = this->bannerPos.y + this->field_0xa0 * -2, this->bannerPos.y = iVar9, iVar9 < 0)) {
             uVar7 &= 0xfe;
-            this->field_0xe2 = (char)uVar7;
+            this->field_0xe2 = uVar7;
         }
 
         if ((((uVar7 >> 1 & 1) != 0) && (this->field_0xb0 <= bVar1))
             && (iVar9 = this->primaryWordPos.x + this->field_0xb4 * 2, this->primaryWordPos.x = iVar9,
                 this->storedStrWidth + (screenInfo->size).x < iVar9 >> 16)) {
             uVar7            = uVar7 & 0xfffffffd;
-            this->field_0xe2 = (char)uVar7;
+            this->field_0xe2 = uVar7;
         }
 
         if ((((uVar7 >> 2 & 1) != 0) && (this->field_0xc4 <= bVar1))
             && (iVar9 = this->secondaryWordPos.x + this->field_0xc8 * 2, this->secondaryWordPos.x = iVar9,
                 this->storedStrWidth + (screenInfo->size).x < iVar9 >> 16)) {
             uVar7            = uVar7 & 0xfffffffb;
-            this->field_0xe2 = (char)uVar7;
+            this->field_0xe2 = uVar7;
         }
 
         if (((uVar7 >> 3 & 1) && this->field_0xd8 <= bVar1)
-            && (iVar9 = this->field_0xcc + this->field_0xdc * 2, this->field_0xcc = iVar9, screenInfo->size.x < iVar9 >> 16)) {
+            && (iVar9 = this->actIDPos.x + this->field_0xdc * 2, this->actIDPos.x = iVar9, screenInfo->size.x < iVar9 >> 16)) {
             this->field_0xe2 = (uint8)uVar7 & 0xf7;
         }
     }

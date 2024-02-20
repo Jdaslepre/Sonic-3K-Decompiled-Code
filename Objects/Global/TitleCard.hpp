@@ -36,19 +36,19 @@ struct TitleCard : RSDK::GameObject::Entity {
 
     int32 field_0x98;
     int32 field_0xa0;
-    int32 field_0xac;
+    uint32 field_0xac;
 
     int32 field_0xb4;
 
     Vector2 primaryWordPos;
     // some data here and there
     Vector2 secondaryWordPos;
+    // same
+    Vector2 actIDPos;
 
-    int32 field_0xd0;
     int32 field_0xd4;
     int32 field_0xc0;
     int32 field_0xc8;
-    int32 field_0xcc;
     int32 field_0xdc;
 
     uint8 field_0x9c;
