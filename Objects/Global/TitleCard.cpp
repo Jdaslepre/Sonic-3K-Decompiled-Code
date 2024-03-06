@@ -1,4 +1,4 @@
-// ---------------------------------------------------------------------
+﻿// ---------------------------------------------------------------------
 // RSDK Project: S3KT
 // Object Name: TitleCard
 // Decompiled by: Jd1206 || S3O
@@ -21,45 +21,23 @@ void TitleCard::StaticUpdate() {}
 
 void TitleCard::Draw()
 {
-    uint16 stringLength = 0;
-    String *string      = NULL;
-    Vector2 drawPos;
-
     if (!this->noBanner) {
-        drawPos.x = this->bannerPos.x;
-        drawPos.y = this->bannerPos.y;
-        Graphics::DrawRect((drawPos.x >> 16) - 32, 0, 64, drawPos.y >> 16, 0xE00000, 255, FX_NONE, true);
-        this->gameNameAnimator.DrawSprite(&drawPos, true);
+        Graphics::DrawRect(FROM_FIXED(this->bannerPos.x) - 32, 0, 64, FROM_FIXED(this->bannerPos.y), 0xE00000, 255, FX_NONE, true);
+        this->gameNameAnimator.DrawSprite(&this->bannerPos, true);
     }
 
     // originally (this->actID - 2) > 2, didn't wanna work for
     // some reason so here's some custom stuff
-    if (this->actID < 3) {
-        drawPos.x = this->actIDPos.x;
-        drawPos.y = this->actIDPos.y;
-        this->actIDAnimator.DrawSprite(&drawPos, true);
-    }
+    if (this->actID < 3)
+        this->actIDAnimator.DrawSprite(&this->actIDPos, true);
 
-    this->strName.GetWidth(sVars->aniFrames, 1, 0, (int32)(this->strName).length, 0);
+    this->strName.GetWidth(sVars->aniFrames, 1, 0, (int32)this->strName.length, 0); // ?
+    this->fontAnimator.DrawString(&this->primaryWordPos, &this->strName, 0, this->strName.length, ALIGN_CENTER, 0, 0, true);
 
-    drawPos.x = this->primaryWordPos.x;
-    drawPos.y = this->primaryWordPos.y;
-    this->fontAnimator.DrawString(&drawPos, &this->strName, 0, (int32)(this->strName).length, 2, 0, 0, true);
-
-    if (this->actID < 3) {
-        drawPos.x    = this->secondaryWordPos.x;
-        drawPos.y    = this->secondaryWordPos.y;
-        string       = &sVars->secondaryWord;
-        stringLength = sVars->secondaryWord.length;
-    }
-    else if (this->actID != 3) {
-        drawPos.x    = this->secondaryWordPos.x;
-        drawPos.y    = this->secondaryWordPos.y;
-        string       = &sVars->strName;
-        stringLength = sVars->strName.length;
-    }
-
-    this->fontAnimator.DrawString(&drawPos, string, 0, (int32)stringLength, 2, 0, 0, true);
+    if (this->actID < 3)
+        this->fontAnimator.DrawString(&this->secondaryWordPos, &sVars->secondaryWord, 0, sVars->secondaryWord.length, ALIGN_CENTER, 0, 0, true);
+    else if (this->actID != 3)
+        this->fontAnimator.DrawString(&this->secondaryWordPos, &sVars->strName, 0, sVars->strName.length, ALIGN_CENTER, 0, 0, true);
 }
 
 void TitleCard::Create(void *data)
@@ -105,8 +83,8 @@ void TitleCard::Create(void *data)
 
             this->field_0xa0 = mby / 11.0; // controls the banner y speed based on the screen's Y size
 
-            int32 unknown1         = screenXCenter + TO_FIXED(288);
-            unknown6         = (int)(((float)screenInfo->size.x / 320.0) * 1048576.0);
+            int32 unknown1 = screenXCenter + TO_FIXED(288);
+            unknown6       = (int)(((float)screenInfo->size.x / 320.0) * 1048576.0);
             // unknown6 = TO_FIXED_F((screenInfo->size.x / 320) * 16);
 
             this->primaryWordPos.x = unknown1 + unknown6 * 20;
@@ -115,7 +93,6 @@ void TitleCard::Create(void *data)
             this->field_0xb0       = 3;
             this->field_0xb4       = unknown6;
 
-            // sorry for this horrible looking code, it's not *that* bad i think...
             if (this->noBanner)
                 this->field_0xac = TO_FIXED((screenInfo->size.x + (screenInfo->size.x < 0) + stringWidth + (stringWidth < 0)) >> 1);
 
@@ -153,7 +130,6 @@ void TitleCard::StageLoad()
     sVars->secondaryWord.chars  = strName.chars;
 
     strName.Init("ZOO", 0);
-    // RSDKTable->InitString(&strName, "ZOO", 0);
 
     pSVar1                  = &sVars->secondaryWord;
     String *pSVar2          = &sVars->strName;
@@ -165,9 +141,25 @@ void TitleCard::StageLoad()
 }
 
 #if RETRO_INCLUDE_EDITOR
-void TitleCard::EditorDraw() {}
+void TitleCard::EditorDraw()
+{
+    // Animator is set in Create
+    this->gameNameAnimator.DrawSprite(NULL, false);
+}
 
-void TitleCard::EditorLoad() {}
+void TitleCard::EditorLoad()
+{
+    sVars->aniFrames.Load("Editor/EditorIcons.bin", SCOPE_STAGE);
+
+    RSDK_ACTIVE_VAR(TitleCard, "trackID");
+    RSDK_ENUM_VAR("Act 1");
+    RSDK_ENUM_VAR("Act 2");
+    RSDK_ENUM_VAR("No Act");
+    RSDK_ENUM_VAR("No Zone");
+    RSDK_ENUM_VAR("Zoo");
+    RSDK_ENUM_VAR("Zoo 1");
+    RSDK_ENUM_VAR("Zoo 2");
+}
 #endif
 
 void TitleCard::StaticLoad(Static *sVars) { RSDK_INIT_STATIC_VARS(TitleCard); }
@@ -183,41 +175,33 @@ void TitleCard::State_Init()
 {
     SET_CURRENT_STATE();
 
-    uint8 uVar1;
-    SpriteAnimation aniFrames;
-    int32 uVar2;
     int32 frameID;
-    uint8 uVar3;
 
     this->gameNameAnimator.SetAnimation(sVars->aniFrames, 0, false, 0);
 
-    uVar3 = 1;
-    if (globals->starpostStyle != 6)
-        uVar3 = 2;
-
-    uVar1 = 0;
-    if (globals->starpostStyle != 5)
-        uVar1 = uVar3;
-
-    this->field_0xf8 = uVar1;
+    if (globals->gameSpriteStyle == GAME_SK) { // Sonic & Knuckles branding
+        this->gameNameAnimator.frameID = 1;
+    }
+    else if (globals->gameSpriteStyle == GAME_S3) { // Sonic 3 branding
+        this->gameNameAnimator.frameID = 0;
+    }
+    else { // Sonic 3 & Knuckles branding (lock-on technology 🤯)
+        this->gameNameAnimator.frameID = 2;
+    }
 
     this->fontAnimator.SetAnimation(sVars->aniFrames, 1, false, 0);
     frameID = this->actID;
-    uVar2   = this->actID;
 
-    if (!globals->atlCameraBoundsL[0] || uVar2 != 1) {
-        aniFrames = sVars->aniFrames;
-
-        if (uVar2 > 4)
-            frameID = uVar2 - 5;
+    if (!globals->atlCameraBoundsL[0] || this->actID != 1) {
+        if (this->actID > 4)
+            frameID = this->actID - 5;
     }
     else {
         this->actID = 0;
-        aniFrames   = sVars->aniFrames;
         frameID     = 0;
     }
 
-    this->actIDAnimator.SetAnimation(aniFrames, 2, false, frameID);
+    this->actIDAnimator.SetAnimation(sVars->aniFrames, 2, false, frameID);
 
     NotifyCallback(NOTIFY_TITLECARD_INIT, 0, 0, 0);
 

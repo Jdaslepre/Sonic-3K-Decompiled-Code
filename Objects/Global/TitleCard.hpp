@@ -21,31 +21,27 @@ struct TitleCard : RSDK::GameObject::Entity {
     // Entity Vars
     StateMachine<TitleCard> state;
     String strName;
-    uint8 actID;
+    int32 storedStrWidth;
+    int32 actID;
+    Vector2 bannerPos;
+    // ... data
+    Vector2 primaryWordPos;
+    // ... data
+    Vector2 secondaryWordPos;
+    // ... data
+    Vector2 actIDPos;
+    // ... data
+    FXFade *storedFade;
+    Animator gameNameAnimator;
     Animator actIDAnimator;
     Animator fontAnimator;
     bool32 noBanner;
 
-    FXFade *storedFade;
-    Animator gameNameAnimator;
-
     // uh
-    uint8 storedStrWidth;
-
-    Vector2 bannerPos;
-
     int32 field_0x98;
     int32 field_0xa0;
     uint32 field_0xac;
-
     int32 field_0xb4;
-
-    Vector2 primaryWordPos;
-    // some data here and there
-    Vector2 secondaryWordPos;
-    // same
-    Vector2 actIDPos;
-
     int32 field_0xd4;
     int32 field_0xc0;
     int32 field_0xc8;
@@ -58,7 +54,6 @@ struct TitleCard : RSDK::GameObject::Entity {
     uint8 field_0xe0;
     int32 field_0x80;
 
-    uint8 field_0xf8;
     uint8 field_0xe2;
     uint8 field_0x96;
 
